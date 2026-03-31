@@ -1,0 +1,31 @@
+@page "/logs"
+
+<h3>Journal Système</h3>
+
+<div class="alert alert-secondary">
+    Il y a <strong>@ErrorCount</strong> erreurs sur un total de <strong>@SystemLogs.Count</strong> logs.
+</div>
+
+<ul class="list-group">
+    @foreach (var log in SystemLogs)
+    {
+       
+        <li class="list-group-item @(log.Contains("Erreur") ? "text-danger" : "text-success")">
+            @log
+        </li>
+    }
+</ul>
+
+@code {
+    private List<string> SystemLogs = new()
+    {
+        "10:00 - Démarrage du système",
+        "10:05 - Erreur : Connexion base de données échouée",
+        "10:06 - Reconnexion réussie",
+        "10:15 - Erreur : Timeout API externe",
+        "10:20 - Sauvegarde automatique effectuée"
+    };
+
+    // Compte le nombre de logs contenant "Erreur"
+    private int ErrorCount => SystemLogs.Count(l => l.Contains("Erreur"));
+}

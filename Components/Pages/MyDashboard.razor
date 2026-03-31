@@ -1,0 +1,180 @@
+@page "/dashboard"
+@rendermode InteractiveServer
+@using DashboardData.Services
+@inject ISensorService SensorService
+@inject NavigationManager NavManager
+@inject UserCounterService CounterService
+
+@using DashboardData.Models
+@using Microsoft.AspNetCore.Components.Web
+
+
+<PageTitle>Mon Dashboard Data</PageTitle>
+<div class="alert alert-dark">
+    Nombre de visites/actions : <strong>@CounterService.Count</strong>
+</div>
+<h1>Tableau de Bord</h1>
+
+<div class="alert alert-info">
+    Bienvenue sur l'interface de pilotage.
+    Nous sommes le : <strong>@DateTime.Now.ToString("dd MMMM yyyy")</strong>
+</div>
+
+<p>
+    Status du système :
+    @if (IsSystemOK)
+    {
+        <span class="badge bg-success">Opérationnel</span>
+    }
+    else
+    {
+        <span class="badge bg-danger">Erreur Critique</span>
+    }
+</p>
+
+<button class="btn btn-primary mb-3" @onclick="RefreshSystem">
+    <span class="bi bi-arrow-repeat"></span> Actualiser le statut
+</button>
+
+<button class="btn btn-success mb-3 ms-2" @onclick="@(() => NavManager.NavigateTo("/add-sensor"))">
+    <span class="bi bi-plus-circle"></span> Add Sensor
+</button>
+<button class="btn btn-secondary mb-3 ms-2" @onclick="LoadAll">
+    Toutes les sondes
+</button>
+
+<button class="btn btn-danger mb-3 ms-2" @onclick="LoadCritical">
+    Alertes (> 30.0)
+</button>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Total Sondes</h5>
+                <h2>@TotalSondes</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">Moyenne Globale</h5>
+                <h2>@Moyenne.ToString("F1") °C</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card text-white bg-danger">
+            <div class="card-body">
+                <h5 class="card-title">Valeur Max</h5>
+                <h2>@Max.ToString("F1") °C</h2>
+            </div>
+        </div>
+    </div>
+</div>
+<a href="/edit-sensor" class="btn btn-success mb-3">+ Nouveau Capteur</a>
+@if (_isLoading)
+{
+    <p><em>Chargement des données...</em></p>
+}
+else
+{
+    <table class="table table-striped">
+       <thead>
+    <tr>
+        <th>Capteur</th>
+        <th>Lieu</th>
+        <th>Valeur</th>
+        <th>Actions</th>
+    </tr>
+</thead>
+       <tbody>
+    @foreach (var sensor in _sensors)
+    {
+        <tr>
+            <td>@sensor.Name</td>
+            <td>@(sensor.Location?.Name ?? "Non défini")</td>
+            <td>@sensor.Value</td>
+           <td>
+    <a href="/edit-sensor/@sensor.Id" class="btn btn-sm btn-outline-primary">Éditer</a>
+
+    <button class="btn btn-sm btn-outline-danger ms-2"
+            @onclick="() => DeleteSensor(sensor.Id)">
+        Supprimer
+    </button>
+</td>
+        </tr>
+    }
+</tbody>
+    </table>
+}
+
+<div class="mt-3 card card-body">
+    Logs : @LastLog
+</div>
+
+@code {
+    private bool IsSystemOK = true;
+    private int RequestCount = 0;
+    private string LastLog = "Rien à signaler";
+
+    private List<SensorData> _sensors = new();
+    private bool _isLoading = true;
+    private int TotalSondes;
+    private double Moyenne;
+    private double Max;
+
+    // OnInitializedAsync au lieu de OnInitialized
+    protected override async Task OnInitializedAsync()
+    {    CounterService.Increment();
+        _sensors = await SensorService.GetSensorsAsync();
+        _isLoading = false; // Le chargement est terminé
+        TotalSondes = await SensorService.GetTotalCountAsync();
+        Moyenne = await SensorService.GetAverageValueAsync();
+        Max = await SensorService.GetMaxValueAsync();
+    }
+
+    private void RefreshSystem()
+    {
+        RequestCount++;
+        var rnd = new Random();
+        IsSystemOK = rnd.Next(0, 10) > 2;
+
+        if (IsSystemOK)
+        {
+            LastLog = $"Check {RequestCount} : Tout va bien.";
+
+            // Simule un changement de valeurs pour voir le tableau bouger
+            foreach (var s in _sensors)
+            {
+                s.Value += Math.Round((rnd.NextDouble() - 0.5) * 2, 1);
+            }
+        }
+        else
+        {
+            LastLog = $"Check {RequestCount} : ANOMALIE DÉTECTÉE !";
+        }
+    }
+    private async Task LoadAll()
+{
+    _isLoading = true;
+    _sensors = await SensorService.GetSensorsAsync();
+    _isLoading = false;
+}
+
+private async Task LoadCritical()
+{
+    _isLoading = true;
+    _sensors = await SensorService.GetCriticalSensorsAsync(30.0);
+    _isLoading = false;
+}
+private async Task DeleteSensor(int id)
+{
+    await SensorService.DeleteSensorAsync(id);
+    await LoadAll(); // recharge la liste
+}
+    
+}
