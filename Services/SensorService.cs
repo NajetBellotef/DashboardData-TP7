@@ -3,8 +3,14 @@ namespace DashboardData.Services;
 using DashboardData.Data;
 using Microsoft.EntityFrameworkCore;
 
-public class SensorService : ISensorService
+public class SensorService : ISensorService{
+
+
+public async Task ReloadSensorAsync(SensorData sensor)
 {
+    await _context.Entry(sensor).ReloadAsync();
+}
+
     private readonly AppDbContext _context;
 
 public SensorService(AppDbContext context)

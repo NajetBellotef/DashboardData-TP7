@@ -403,3 +403,4 @@ C:\Users\MSI\Downloads\DashboardData-main\DashboardData-main\obj\Debug\net10.0\r
 C:\Users\MSI\Downloads\DashboardData-main\DashboardData-main\obj\Debug\net10.0\DashboardData.pdb
 C:\Users\MSI\Downloads\DashboardData-main\DashboardData-main\obj\Debug\net10.0\DashboardData.genruntimeconfig.cache
 C:\Users\MSI\Downloads\DashboardData-main\DashboardData-main\obj\Debug\net10.0\ref\DashboardData.dll
+C:\Users\MSI\Downloads\DashboardData-main\DashboardData-main\obj\Debug\net10.0\DashboardData.sourcelink.json

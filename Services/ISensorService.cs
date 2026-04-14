@@ -5,6 +5,7 @@ public interface ISensorService
     //List<SensorData> GetSensors();
     Task<List<SensorData>> GetSensorsAsync();
     Task<List<SensorData>> GetCriticalSensorsAsync(double threshold);
+    Task ReloadSensorAsync(SensorData sensor);
     Task<int> GetTotalCountAsync();
     Task<double> GetAverageValueAsync();
     Task<double> GetMaxValueAsync();

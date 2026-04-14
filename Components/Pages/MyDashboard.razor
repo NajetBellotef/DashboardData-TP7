@@ -1,6 +1,7 @@
 @page "/dashboard"
 @rendermode InteractiveServer
 @using DashboardData.Services
+@using DashboardData.Components.UI
 @inject ISensorService SensorService
 @inject NavigationManager NavManager
 @inject UserCounterService CounterService
@@ -46,33 +47,25 @@
 <button class="btn btn-danger mb-3 ms-2" @onclick="LoadCritical">
     Alertes (> 30.0)
 </button>
-
+<!-- AJOUTER: bouton pour changer de vue -->
+<button class="btn btn-outline-secondary mb-3 ms-2"
+        @onclick="() => ShowAsCards = !ShowAsCards">
+    <i class="bi bi-arrow-left-right"></i> Changer de Vue
+</button>
+<!-- Dans MyDashboard.razor -->
 <div class="row mb-4">
-    <div class="col-md-4">
-        <div class="card text-white bg-primary">
-            <div class="card-body">
-                <h5 class="card-title">Total Sondes</h5>
-                <h2>@TotalSondes</h2>
-            </div>
-        </div>
+    <div class="col-md-4 mb-3">
+        <!-- On passe les paramètres comme de simples attributs HTML -->
+        <KpiCard Title="Total Sondes" Value="@TotalSondes.ToString()"
+                 BackgroundColorClass="bg-primary" IconClass="bi-box-seam" />
     </div>
-
-    <div class="col-md-4">
-        <div class="card text-white bg-success">
-            <div class="card-body">
-                <h5 class="card-title">Moyenne Globale</h5>
-                <h2>@Moyenne.ToString("F1") °C</h2>
-            </div>
-        </div>
+    <div class="col-md-4 mb-3">
+        <KpiCard Title="Moyenne Globale" Value="@($"{Moyenne:F1} °C")"
+                 BackgroundColorClass="bg-success" IconClass="bi-bullseye" />
     </div>
-
-    <div class="col-md-4">
-        <div class="card text-white bg-danger">
-            <div class="card-body">
-                <h5 class="card-title">Valeur Max</h5>
-                <h2>@Max.ToString("F1") °C</h2>
-            </div>
-        </div>
+    <div class="col-md-4 mb-3">
+        <KpiCard Title="Alerte Max" Value="@($"{Max:F1} °C")"
+                 BackgroundColorClass="bg-danger" IconClass="bi-exclamation-triangle-fill" />
     </div>
 </div>
 <a href="/edit-sensor" class="btn btn-success mb-3">+ Nouveau Capteur</a>
@@ -82,34 +75,24 @@
 }
 else
 {
-    <table class="table table-striped">
-       <thead>
-    <tr>
-        <th>Capteur</th>
-        <th>Lieu</th>
-        <th>Valeur</th>
-        <th>Actions</th>
-    </tr>
-</thead>
-       <tbody>
-    @foreach (var sensor in _sensors)
+ <!-- AJOUTER : condition pour basculer entre les vues -->
+    @if (ShowAsCards)
     {
-        <tr>
-            <td>@sensor.Name</td>
-            <td>@(sensor.Location?.Name ?? "Non défini")</td>
-            <td>@sensor.Value</td>
-           <td>
-    <a href="/edit-sensor/@sensor.Id" class="btn btn-sm btn-outline-primary">Éditer</a>
-
-    <button class="btn btn-sm btn-outline-danger ms-2"
-            @onclick="() => DeleteSensor(sensor.Id)">
-        Supprimer
-    </button>
-</td>
-        </tr>
+        <!-- Vue CARTES -->
+        <div class="row">
+            @foreach (var s in _sensors)
+            {
+                <div class="col-md-3 mb-3">
+                    <SensorCard Sensor="s" />
+                </div>
+            }
+        </div>
     }
-</tbody>
-    </table>
+    else
+    {
+        <!-- Vue TABLEAU -->
+        <SensorTable Sensors="_sensors" OnDeleteClicked="DeleteSensor" />
+    }
 }
 
 <div class="mt-3 card card-body">
@@ -126,7 +109,8 @@ else
     private int TotalSondes;
     private double Moyenne;
     private double Max;
-
+// AJOUT 3 : variable pour gérer la vue
+    private bool ShowAsCards = false;
     // OnInitializedAsync au lieu de OnInitialized
     protected override async Task OnInitializedAsync()
     {    CounterService.Increment();
